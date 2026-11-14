@@ -50,6 +50,13 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
+          # better-sqlite3 is an optionalDependency: when its install fails,
+          # npm silently drops the package (no node_modules/better-sqlite3 at
+          # all). v12.11.1 ships no node-v115 (node 20) prebuilds, so install
+          # it directly -- never optional -- and build from source if needed.
+          if [ ! -d node_modules/better-sqlite3 ]; then
+            npm install better-sqlite3 --no-save --foreground-scripts
+          fi
           cd node_modules/better-sqlite3
           npx --yes prebuild-install || npx --yes node-gyp rebuild --release
           ls -l build/Release/better_sqlite3.node
