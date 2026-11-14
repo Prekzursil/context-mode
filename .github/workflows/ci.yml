@@ -46,9 +46,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Rebuild better-sqlite3 native addon (Windows)
+      - name: Build better-sqlite3 native addon (Windows)
         if: runner.os == 'Windows'
-        run: npm rebuild better-sqlite3
+        shell: bash
+        run: |
+          cd node_modules/better-sqlite3
+          npx --yes prebuild-install || npx --yes node-gyp rebuild --release
+          ls -l build/Release/better_sqlite3.node
 
       - name: Typecheck
         run: npx tsc -b --noEmit
