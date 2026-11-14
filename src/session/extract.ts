@@ -193,7 +193,7 @@ function extractCwd(input: HookInput): SessionEvent[] {
  * isError flag in tool_output.
  */
 function extractError(input: HookInput): SessionEvent[] {
-  const { tool_name, tool_input, tool_response, tool_output } = input;
+  const { tool_name, tool_response, tool_output } = input;
 
   const response = String(tool_response ?? "");
   const isErrorFlag = tool_output?.isError === true;

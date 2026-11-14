@@ -15,7 +15,7 @@
 import * as p from "@clack/prompts";
 import color from "picocolors";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, cpSync, accessSync, existsSync, readdirSync, rmSync, closeSync, openSync, chmodSync, constants } from "node:fs";
+import { readFileSync, writeFileSync, cpSync, accessSync, existsSync, rmSync, closeSync, openSync, chmodSync, constants, mkdtempSync } from "node:fs";
 import { request as httpsRequest } from "node:https";
 import { resolve, dirname, join } from "node:path";
 import { tmpdir, devNull } from "node:os";
@@ -415,7 +415,7 @@ async function upgrade() {
   // Step 1: Pull latest from GitHub
   p.log.step("Pulling latest from GitHub...");
   const localVersion = getLocalVersion();
-  const tmpDir = join(tmpdir(), `context-mode-upgrade-${Date.now()}`);
+  const tmpDir = mkdtempSync(join(tmpdir(), "context-mode-upgrade-"));
 
   s.start("Cloning mksglu/context-mode");
   try {

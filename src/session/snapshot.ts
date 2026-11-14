@@ -34,9 +34,7 @@ export interface BuildSnapshotOpts {
 const DEFAULT_MAX_BYTES = 2048;
 const MAX_ACTIVE_FILES = 10;
 
-// Priority tier category groupings
-const P1_CATEGORIES = new Set(["file", "task", "rule"]);
-const P2_CATEGORIES = new Set(["cwd", "error", "decision", "env", "git"]);
+// Priority tier category groupings (P1/P2 sets were unused dead constants;
 // P3-P4: everything else (subagent, skill, role, data, intent, mcp)
 
 // ── Section renderers ────────────────────────────────────────────────────────

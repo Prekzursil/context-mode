@@ -83,10 +83,11 @@ async function main() {
 
   // ===== CONTEXT7: Supabase Edge Functions =====
   const supabaseFixture = join(fixtureDir, "context7-supabase-edge.md");
-  if (!existsSync(supabaseFixture)) {
+  let fixtureContent: string | null = null;
+  try { fixtureContent = readFileSync(supabaseFixture, "utf-8"); } catch { fixtureContent = null; }
+  if (fixtureContent === null) {
     const { writeFileSync: writeSyncFn } = await import("node:fs");
-    const content = readFileSync("/tmp/context7-edge-functions.md", "utf-8");
-    writeSyncFn(supabaseFixture, content);
+    writeSyncFn(supabaseFixture, readFileSync("/tmp/context7-edge-functions.md", "utf-8"));
   }
 
   results.push(

@@ -303,11 +303,6 @@ export function positionsFromHighlight(highlighted: string): number[] {
   return positions;
 }
 
-/** Strip STX/ETX markers to recover original content. */
-function stripMarkers(highlighted: string): string {
-  return highlighted.replaceAll(STX, "").replaceAll(ETX, "");
-}
-
 export function extractSnippet(
   content: string,
   query: string,
@@ -629,23 +624,6 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
 // ─────────────────────────────────────────────────────────
 // Helper: index stdout into FTS5 knowledge base
 // ─────────────────────────────────────────────────────────
-
-function indexStdout(
-  stdout: string,
-  source: string,
-): { content: Array<{ type: "text"; text: string }> } {
-  const store = getStore();
-  trackIndexed(Buffer.byteLength(stdout));
-  const indexed = store.index({ content: stdout, source });
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: `Indexed ${indexed.totalChunks} sections (${indexed.codeChunks} with code) from: ${indexed.label}\nUse search(queries: ["..."]) to query this content. Use source: "${indexed.label}" to scope results.`,
-      },
-    ],
-  };
-}
 
 // ─────────────────────────────────────────────────────────
 // Helper: intent-driven search on execution output

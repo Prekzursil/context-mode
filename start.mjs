@@ -116,7 +116,6 @@ if (cacheMatch) {
 }
 
 // Ensure native dependencies are available (shared with hooks via ensure-deps.mjs)
-import { ensureDeps } from "./hooks/ensure-deps.mjs";
 // ensure-deps handles better-sqlite3; also install pure-JS deps used by server
 for (const pkg of ["turndown", "turndown-plugin-gfm", "@mixmark-io/domino"]) {
   if (!existsSync(resolve(__dirname, "node_modules", pkg))) {

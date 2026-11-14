@@ -19,7 +19,7 @@ import {
   rmSync,
   existsSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 
 // ═══════════════════════════════════════════════════════════════════════
 // Hook Integration Tests -- pretooluse.mjs
@@ -32,7 +32,7 @@ const HOOK_PATH = join(__dirname, "..", "..", "hooks", "pretooluse.mjs");
 // Subprocess hooks use process.ppid (= this test's pid) + VITEST_WORKER_ID.
 const _wid = process.env.VITEST_WORKER_ID;
 const _guidanceSuffix = _wid ? `${process.pid}-w${_wid}` : String(process.pid);
-const _guidanceDir = resolve(tmpdir(), `context-mode-guidance-${_guidanceSuffix}`);
+const _guidanceDir = resolve(homedir(), ".context-mode", `guidance-${_guidanceSuffix}`);
 beforeEach(() => {
   try { rmSync(_guidanceDir, { recursive: true, force: true }); } catch {}
 });
@@ -187,10 +187,10 @@ describe("WebFetch", () => {
     });
     assertDeny(result, "fetch_and_index");
     const parsed = JSON.parse(result.stdout);
-    assert.ok(
-      parsed.hookSpecificOutput.permissionDecisionReason.includes("https://docs.example.com/api"),
-      "Expected original URL in reason",
-    );
+    const reason: string = parsed.hookSpecificOutput.permissionDecisionReason;
+    const urlRe = new RegExp("(^|[^\w.-])https://docs\.example\.com/api(?=$|[^\w.-])");
+    assert.ok(urlRe.test(reason), "Expected original URL in reason");
+    assert.ok(!reason.includes("docs.example.com.evil.com"), "Reason must not contain lookalike hosts");
     assert.ok(
       parsed.hookSpecificOutput.permissionDecisionReason.includes("Do NOT use curl"),
       "Expected curl warning in reason",
@@ -355,8 +355,8 @@ describe("Security Policy Enforcement", () => {
 
   beforeAll(() => {
     // Set up isolated temp dirs for security tests
-    ISOLATED_HOME = join(tmpdir(), `hook-sec-home-${Date.now()}`);
-    MOCK_PROJECT_DIR = join(tmpdir(), `hook-sec-project-${Date.now()}`);
+    ISOLATED_HOME = mkdtempSync(join(tmpdir(), "hook-sec-home-"));
+    MOCK_PROJECT_DIR = mkdtempSync(join(tmpdir(), "hook-sec-project-"));
     const mockClaudeDir = join(MOCK_PROJECT_DIR, ".claude");
     mkdirSync(join(ISOLATED_HOME, ".claude"), { recursive: true });
     mkdirSync(mockClaudeDir, { recursive: true });

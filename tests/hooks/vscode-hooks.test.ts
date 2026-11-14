@@ -117,7 +117,7 @@ describe("VS Code Copilot hooks", () => {
   beforeEach(() => {
     const wid = process.env.VITEST_WORKER_ID;
     const suffix = wid ? `${process.pid}-w${wid}` : String(process.pid);
-    const guidanceDir = resolve(tmpdir(), `context-mode-guidance-${suffix}`);
+    const guidanceDir = resolve(homedir(), ".context-mode", `guidance-${suffix}`);
     try { rmSync(guidanceDir, { recursive: true, force: true }); } catch { /* best effort */ }
   });
 
