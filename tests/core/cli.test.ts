@@ -8,9 +8,8 @@
  */
 import { describe, it, test, expect, beforeEach, afterEach } from "vitest";
 import { strict as assert } from "node:assert";
-import { readFileSync, existsSync, accessSync, constants, mkdirSync, writeFileSync, rmSync, readdirSync } from "node:fs";
+import { readFileSync, existsSync, accessSync, constants, mkdirSync, writeFileSync, rmSync, readdirSync, mkdtempSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { toUnixPath } from "../../src/cli.js";
 
@@ -210,7 +209,7 @@ async function loadEnsureNativeCompat(): Promise<(pluginRoot: string) => void> {
   const match = src.match(/^function ensureNativeCompat\b[\s\S]*?^}/m);
   if (!match) throw new Error("ensureNativeCompat not found in start.mjs");
 
-  const tmpFile = join(tmpdir(), `abi-test-${Date.now()}.mjs`);
+  const tmpFile = join(mkdtempSync(join(tmpdir(), "abi-test-")), "abi-test.mjs");
   writeFileSync(tmpFile, [
     'import { existsSync, copyFileSync } from "node:fs";',
     'import { resolve } from "node:path";',

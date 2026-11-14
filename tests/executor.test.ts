@@ -1,13 +1,12 @@
 import { describe, test, expect, afterAll } from "vitest";
 import { strict as assert } from "node:assert";
-import { writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { writeFileSync, mkdirSync, rmSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { PolyglotExecutor } from "../src/executor.js";
 import {
   detectRuntimes,
   buildCommand,
-  getRuntimeSummary,
   type RuntimeMap,
 } from "../src/runtime.js";
 
@@ -68,7 +67,7 @@ describe("Runtime Detection", () => {
     test("Windows: shell execute works with non-ASCII (Chinese) project path", async () => {
       const { mkdirSync, rmSync } = await import("node:fs");
       const { tmpdir } = await import("node:os");
-      const chineseDir = join(tmpdir(), "测试目录");
+      const chineseDir = mkdtempSync(join(tmpdir(), "测试目录-"));
       try { mkdirSync(chineseDir, { recursive: true }); } catch {}
       const chineseExecutor = new PolyglotExecutor({ runtimes, projectRoot: chineseDir });
       const r = await chineseExecutor.execute({ language: "shell", code: 'echo "chinese path ok"' });
@@ -769,8 +768,7 @@ describe("Output Truncation", () => {
 });
 
 describe("execute_file (FILE_CONTENT)", () => {
-  const testDir = join(tmpdir(), "ctx-mode-test-" + Date.now());
-  mkdirSync(testDir, { recursive: true });
+  const testDir = mkdtempSync(join(tmpdir(), "ctx-mode-test-"));
   const testFile = join(testDir, "test-data.json");
   writeFileSync(
     testFile,

@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 
 export type Language =
@@ -82,7 +82,7 @@ function resolveWindowsBash(): string | null {
 
   // Fallback: scan PATH via `where bash`, skipping WSL and WindowsApps entries.
   try {
-    const result = execSync("where bash", { encoding: "utf-8", stdio: "pipe" });
+    const result = execFileSync("where", ["bash"], { encoding: "utf-8", stdio: "pipe" });
     const candidates = result.trim().split(/\r?\n/).map(p => p.trim()).filter(Boolean);
     for (const p of candidates) {
       const lower = p.toLowerCase();
@@ -97,7 +97,7 @@ function resolveWindowsBash(): string | null {
 
 function getVersion(cmd: string): string {
   try {
-    return execSync(`${cmd} --version`, {
+    return execFileSync(cmd, ["--version"], {
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
       timeout: 5000,

@@ -11,7 +11,7 @@
 import type { Database as DatabaseInstance } from "better-sqlite3";
 import { loadDatabase, applyWALPragmas, closeDB } from "./db-base.js";
 import type { PreparedStatement } from "./db-base.js";
-import { readFileSync, readdirSync, unlinkSync, existsSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, unlinkSync, existsSync, statSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -118,26 +118,60 @@ const MAX_CHUNK_BYTES = 4096;
 // ─────────────────────────────────────────────────────────
 
 /**
- * Remove stale DB files from previous sessions whose processes no longer exist.
+ * Per-process private state directory (created with mkdtemp, so the name is
+ * unpredictable and cannot be pre-created by another local user). All
+ * per-process DB files live inside it.
+ */
+let _stateDir: string | null = null;
+export function stateDir(): string {
+  if (_stateDir === null) {
+    _stateDir = mkdtempSync(join(tmpdir(), "context-mode-"));
+  }
+  return _stateDir;
+}
+
+/**
+ * Remove stale DBs from previous sessions whose processes no longer exist.
+ * Current layout: context-mode-* directories containing session-<pid>.db.
+ * Legacy layout (pre-hardening): flat context-mode-<pid>.db files in tmpdir.
  */
 export function cleanupStaleDBs(): number {
   const dir = tmpdir();
   let cleaned = 0;
   try {
-    const files = readdirSync(dir);
-    for (const file of files) {
-      const match = file.match(/^context-mode-(\d+)\.db$/);
-      if (!match) continue;
-      const pid = parseInt(match[1], 10);
-      if (pid === process.pid) continue;
-      try {
-        process.kill(pid, 0);
-      } catch {
-        const base = join(dir, file);
-        for (const suffix of ["", "-wal", "-shm"]) {
-          try { unlinkSync(base + suffix); } catch { /* ignore */ }
+    const entries = readdirSync(dir);
+    for (const entry of entries) {
+      const full = join(dir, entry);
+      let isDir = false;
+      try { isDir = statSync(full).isDirectory(); } catch { continue; }
+      if (isDir && /^context-mode-/.test(entry) && !entry.endsWith(".db")) {
+        // New layout: per-process directory containing session-<pid>.db
+        let pid: number | null = null;
+        try {
+          for (const f of readdirSync(full)) {
+            const m = f.match(/^session-(\d+)\.db$/);
+            if (m) { pid = parseInt(m[1], 10); break; }
+          }
+        } catch { continue; }
+        if (pid === null || pid === process.pid) continue;
+        try { process.kill(pid, 0); } catch {
+          try { rmSync(full, { recursive: true, force: true }); cleaned++; } catch { /* ignore */ }
         }
-        cleaned++;
+      } else if (!isDir) {
+        // Legacy flat files
+        const match = entry.match(/^context-mode-(\d+)\.db$/);
+        if (!match) continue;
+        const pid = parseInt(match[1], 10);
+        if (pid === process.pid) continue;
+        try {
+          process.kill(pid, 0);
+        } catch {
+          const base = join(dir, entry);
+          for (const suffix of ["", "-wal", "-shm"]) {
+            try { unlinkSync(base + suffix); } catch { /* ignore */ }
+          }
+          cleaned++;
+        }
       }
     }
   } catch { /* ignore readdir errors */ }
@@ -267,7 +301,7 @@ export class ContentStore {
   constructor(dbPath?: string) {
     const Database = loadDatabase();
     this.#dbPath =
-      dbPath ?? join(tmpdir(), `context-mode-${process.pid}.db`);
+      dbPath ?? join(stateDir(), `session-${process.pid}.db`);
     this.#db = new Database(this.#dbPath, { timeout: 5000 });
     applyWALPragmas(this.#db);
     this.#initSchema();

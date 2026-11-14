@@ -15,8 +15,8 @@ import {
   createRoutingBlock, createReadGuidance, createGrepGuidance, createBashGuidance,
 } from "../routing-block.mjs";
 import { createToolNamer } from "./tool-naming.mjs";
-import { existsSync, mkdirSync, rmSync, openSync, closeSync, constants as fsConstants } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync, openSync, closeSync, constants as fsConstants } from "node:fs";
+import { homedir } from "node:os";
 import { resolve } from "node:path";
 
 // Guidance throttle: show each advisory type at most once per session.
@@ -29,7 +29,9 @@ const _guidanceShown = new Set();
 const _guidanceId = process.env.VITEST_WORKER_ID
   ? `${process.ppid}-w${process.env.VITEST_WORKER_ID}`
   : String(process.ppid);
-const _guidanceDir = resolve(tmpdir(), `context-mode-guidance-${_guidanceId}`);
+// Per-user (homedir) path: the OS temp dir is shared between local users,
+// making predictable marker paths guessable; the home directory is not.
+const _guidanceDir = resolve(homedir(), ".context-mode", `guidance-${_guidanceId}`);
 
 function guidanceOnce(type, content) {
   // Fast path: in-memory (same process)

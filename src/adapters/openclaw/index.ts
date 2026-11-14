@@ -24,7 +24,6 @@ import {
   copyFileSync,
   accessSync,
   constants,
-  existsSync,
 } from "node:fs";
 import { resolve, join } from "node:path";
 import { homedir } from "node:os";

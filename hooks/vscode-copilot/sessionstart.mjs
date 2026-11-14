@@ -24,7 +24,6 @@ import {
 import { join } from "node:path";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { homedir } from "node:os";
 
 const HOOK_DIR = fileURLToPath(new URL(".", import.meta.url));
 const { loadSessionDB } = createSessionLoaders(HOOK_DIR);

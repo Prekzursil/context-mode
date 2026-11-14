@@ -7,7 +7,7 @@
 
 import { describe, test, beforeAll, afterAll } from "vitest";
 import { strict as assert } from "node:assert";
-import { writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { writeFileSync, mkdirSync, rmSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -180,7 +180,7 @@ describe("Chained Command Evaluation", () => {
   let chainGlobalPath: string;
 
   beforeAll(() => {
-    chainTmpBase = join(tmpdir(), `chain-test-${Date.now()}`);
+    chainTmpBase = mkdtempSync(join(tmpdir(), "chain-test-"));
     const chainGlobalDir = join(chainTmpBase, "global-home", ".claude");
     chainGlobalPath = join(chainGlobalDir, "settings.json");
     mkdirSync(chainGlobalDir, { recursive: true });
@@ -237,7 +237,7 @@ describe("Settings Reader", () => {
   let projectDir: string;
 
   beforeAll(() => {
-    tmpBase = join(tmpdir(), `security-test-${Date.now()}`);
+    tmpBase = mkdtempSync(join(tmpdir(), "security-test-"));
     const globalDir = join(tmpBase, "global-home", ".claude");
     globalSettingsPath = join(globalDir, "settings.json");
     projectDir = join(tmpBase, "project");
@@ -360,7 +360,7 @@ describe("readToolDenyPatterns", () => {
   let toolDenyGlobalPath: string;
 
   beforeAll(() => {
-    toolDenyTmpBase = join(tmpdir(), `tool-deny-test-${Date.now()}`);
+    toolDenyTmpBase = mkdtempSync(join(tmpdir(), "tool-deny-test-"));
     const toolDenyGlobalDir = join(toolDenyTmpBase, "global-home", ".claude");
     toolDenyGlobalPath = join(toolDenyGlobalDir, "settings.json");
 

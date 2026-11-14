@@ -1083,7 +1083,7 @@ describe("verbose logging", () => {
 
   test("before_prompt_build emits debug log when resume is injected", async () => {
     const { default: plugin } = await import("../../src/openclaw-plugin.js");
-    const { api, typedHooks, logLines } = createMockApiHooks(true);
+    const { api, typedHooks } = createMockApiHooks(true);
 
     plugin.register(api as unknown as Parameters<typeof plugin.register>[0]);
 
@@ -1093,7 +1093,6 @@ describe("verbose logging", () => {
     await sessionStartHook!.handler({ sessionId: sid, sessionKey: "test:agent:1" });
 
     // Inject resume directly into DB
-    const dbPath = require("node:path").join(require("node:os").tmpdir(), "dummy.db");
     // (resume injection via before_prompt_build requires DB state — test the log emission
     // by verifying the hook doesn't throw with logger present)
     const resumeHook = typedHooks.find(

@@ -11,7 +11,7 @@ import "./suppress-stderr.mjs";
  * uses core/formatters.mjs for Claude Code output format.
  */
 
-import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync, copyFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, renameSync } from "node:fs";
 import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir, tmpdir } from "node:os";
@@ -38,11 +38,15 @@ try {
   const myVersion = myPkg.version ?? "unknown";
   const myDirName = basename(myRoot);
   const cacheParent = dirname(myRoot);
-  const marker = resolve(tmpdir(), `context-mode-healed-${myVersion}`);
+  const marker = resolve(homedir(), ".context-mode", `healed-${myVersion}`);
 
   // Only self-heal inside plugin cache dirs — skip in dev/CI environments
   const isInPluginCache = myRoot.includes("/plugins/cache/") || myRoot.includes("\\plugins\\cache\\");
-  if (myVersion !== "unknown" && isInPluginCache && !existsSync(marker)) {
+  // Read (not existsSync) to decide: a separate existence check can be
+  // invalidated between check and use (TOCTOU race).
+  let alreadyHealed = false;
+  try { readFileSync(marker, "utf-8"); alreadyHealed = true; } catch {}
+  if (myVersion !== "unknown" && isInPluginCache && !alreadyHealed) {
     // 1. If dir name doesn't match version (e.g. "0.7.0" but code is "0.9.12"),
     //    create correct dir, copy files, update registry + hooks
     const correctDir = resolve(cacheParent, myVersion);
@@ -74,8 +78,9 @@ try {
     // 2. Update installed_plugins.json → point to correct version dir
     //    Skip if not present (e.g. CI / non-Claude-Code environments)
     const ipPath = resolve(homedir(), ".claude", "plugins", "installed_plugins.json");
-    if (existsSync(ipPath)) {
-      const ip = JSON.parse(readFileSync(ipPath, "utf-8"));
+    let ip = null;
+    try { ip = JSON.parse(readFileSync(ipPath, "utf-8")); } catch { ip = null; }
+    if (ip) {
       for (const [key, entries] of Object.entries(ip.plugins || {})) {
         if (!key.toLowerCase().includes("context-mode")) continue;
         for (const entry of entries) {
@@ -84,7 +89,8 @@ try {
           entry.lastUpdated = new Date().toISOString();
         }
       }
-      writeFileSync(ipPath, JSON.stringify(ip, null, 2) + "\n", "utf-8");
+      writeFileSync(ipPath + ".tmp-" + process.pid, JSON.stringify(ip, null, 2) + "\n", "utf-8");
+      renameSync(ipPath + ".tmp-" + process.pid, ipPath);
     }
 
     // 3. Update hook paths + matcher in settings.json for ALL hook types (#187)
@@ -120,13 +126,18 @@ try {
         }
       }
 
-      if (changed) writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n", "utf-8");
+      if (changed) {
+        const tmp = settingsPath + ".tmp-" + process.pid;
+        writeFileSync(tmp, JSON.stringify(settings, null, 2) + "\n", "utf-8");
+        renameSync(tmp, settingsPath);
+      }
     } catch { /* skip settings update */ }
 
     // Old version dirs are cleaned lazily by sessionstart.mjs (age-gated >1h)
     // to avoid breaking active sessions that still reference them (#181).
 
-    writeFileSync(marker, Date.now().toString(), "utf-8");
+    try { mkdirSync(dirname(marker), { recursive: true }); } catch {}
+    try { writeFileSync(marker, Date.now().toString(), { flag: "wx" }); } catch {}
   }
 } catch { /* best effort — don't block hook */ }
 

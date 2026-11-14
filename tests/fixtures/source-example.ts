@@ -1,8 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { logger } from "../utils/logger";
-import { AppError, NotFoundError, ValidationError } from "../errors";
 
 // Types
 interface User {

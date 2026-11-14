@@ -12,7 +12,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { spawnSync, execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { writeFileSync, mkdtempSync, mkdirSync, rmSync, readFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -503,7 +503,7 @@ describe("turndown HTML-to-markdown conversion tests", () => {
 // Set up two isolated directories to simulate the scenario:
 // - pluginDir: where the plugin is installed (start.sh does cd here)
 // - projectDir: where the user's project lives (the real cwd)
-const projDirBaseDir = join(tmpdir(), "ctx-mode-projdir-test-" + Date.now());
+const projDirBaseDir = mkdtempSync(join(tmpdir(), "ctx-mode-projdir-test-"));
 const projectDir = join(projDirBaseDir, "user-project");
 const pluginDir = join(projDirBaseDir, "plugin-install");
 mkdirSync(projectDir, { recursive: true });
@@ -689,7 +689,6 @@ print(f"count: {data['count']}")
 // 5. Subagent Output Budget (subagent-budget)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const HOOK_PATH = join(__dirname, "..", "..", "hooks", "pretooluse.mjs");
 const LIVE = process.argv.includes("--live");
 
 /**
@@ -957,7 +956,6 @@ describe("Context Budget Measurement", () => {
     ).join("\n");
 
     const words = bloatedResponse.split(/\s+/).filter((w) => w.length > 0).length;
-    const bytes = Buffer.byteLength(bloatedResponse);
 
     assert.ok(words > 500, "Bloated response should exceed 500 words");
   });
@@ -988,8 +986,7 @@ if (LIVE) {
 
       const response = result.stdout;
       const words = response.split(/\s+/).filter((w: string) => w.length > 0).length;
-      const bytes = Buffer.byteLength(response);
-
+  
       // Soft assertion — LLM may not always comply perfectly
       if (words > 500) {
         console.log(`    WARNING: Response exceeded 500 word budget (${words} words)`);

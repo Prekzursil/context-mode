@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from "vitest";
 import { strict as assert } from "node:assert";
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdtempSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -17,10 +17,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixtureDir = join(__dirname, "fixtures");
 
 function createStore(): ContentStore {
-  const path = join(
-    tmpdir(),
-    `context-mode-test-${Date.now()}-${Math.random().toString(36).slice(2)}.db`,
-  );
+  const path = join(mkdtempSync(join(tmpdir(), "ctx-store-")), "test.db");
   return new ContentStore(path);
 }
 
@@ -844,7 +841,8 @@ describe("Smart Chunk Titles", () => {
 describe("DB Cleanup", () => {
   test("cleanupStaleDBs removes files for dead PIDs", () => {
     const fakePid = 99999;
-    const fakePath = join(tmpdir(), `context-mode-${fakePid}.db`);
+    const fakeDir = mkdtempSync(join(tmpdir(), "context-mode-"));
+    const fakePath = join(fakeDir, `session-${fakePid}.db`);
     writeFileSync(fakePath, "fake");
     writeFileSync(fakePath + "-wal", "fake");
     writeFileSync(fakePath + "-shm", "fake");
@@ -857,7 +855,8 @@ describe("DB Cleanup", () => {
   });
 
   test("cleanupStaleDBs does not remove current process DB", () => {
-    const myPath = join(tmpdir(), `context-mode-${process.pid}.db`);
+    const myDir = mkdtempSync(join(tmpdir(), "context-mode-"));
+    const myPath = join(myDir, `session-${process.pid}.db`);
     writeFileSync(myPath, "current");
 
     cleanupStaleDBs();
@@ -873,7 +872,7 @@ describe("DB Cleanup", () => {
     store.index({ content: "# Test\n\nCleanup test content.", source: "cleanup-test" });
 
     // Get the DB path by creating a known-path store
-    const knownPath = join(tmpdir(), `context-mode-cleanup-test-${Date.now()}.db`);
+    const knownPath = join(mkdtempSync(join(tmpdir(), "ctx-known-")), `context-mode-cleanup-test-${Date.now()}.db`);
     const knownStore = new ContentStore(knownPath);
     knownStore.index({ content: "# Data\n\nSome data.", source: "known" });
 
@@ -888,7 +887,7 @@ describe("DB Cleanup", () => {
   });
 
   test("store.cleanup() is safe to call multiple times", () => {
-    const path = join(tmpdir(), `context-mode-cleanup-idempotent-${Date.now()}.db`);
+    const path = join(mkdtempSync(join(tmpdir(), "ctx-idem-")), `context-mode-cleanup-idempotent-${Date.now()}.db`);
     const store = new ContentStore(path);
     store.cleanup();
     // Second call should not throw
@@ -1185,7 +1184,7 @@ describe("Persistent content store lifecycle", () => {
   });
 
   test("store data persists after close and reopen at same path", () => {
-    const dbPath = join(tmpdir(), `persist-test-${Date.now()}.db`);
+    const dbPath = join(mkdtempSync(join(tmpdir(), "ctx-persist-")), `persist-test-${Date.now()}.db`);
     const store1 = new ContentStore(dbPath);
     store1.index({ content: "# Persistent\nThis should survive", source: "persist-doc" });
     store1.close();
@@ -1199,7 +1198,7 @@ describe("Persistent content store lifecycle", () => {
   });
 
   test("deleting DB file before creating store gives fresh state", () => {
-    const dbPath = join(tmpdir(), `fresh-test-${Date.now()}.db`);
+    const dbPath = join(mkdtempSync(join(tmpdir(), "ctx-fresh-")), `fresh-test-${Date.now()}.db`);
     const store1 = new ContentStore(dbPath);
     store1.index({ content: "# Old\nOld content", source: "old-doc" });
     store1.close();

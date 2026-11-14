@@ -9,7 +9,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,7 +57,7 @@ if (process.platform === "win32" && process.env.npm_config_global === "true") {
 
     // Detect stale shim locations via `where` command
     try {
-      const whereOutput = execSync("where context-mode.cmd", {
+      const whereOutput = execFileSync("where", ["context-mode.cmd"], {
         encoding: "utf-8",
         stdio: ["pipe", "pipe", "pipe"],
       }).trim();
@@ -97,7 +97,7 @@ if (process.platform === "win32" && process.env.npm_config_global === "true") {
 
     // Also fix stale shims that reference old bin entry (build/cli.js → cli.bundle.mjs)
     try {
-      const whereOutput = execSync("where context-mode.cmd", {
+      const whereOutput = execFileSync("where", ["context-mode.cmd"], {
         encoding: "utf-8",
         stdio: ["pipe", "pipe", "pipe"],
       }).trim();
