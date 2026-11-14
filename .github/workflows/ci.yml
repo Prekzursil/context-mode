@@ -12,7 +12,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # windows-2022 (not -latest): the windows-latest image ships only
+        # VS 18 (2026), which node 20's bundled node-gyp 10.1.0 cannot find
+        # ('gyp ERR! find VS'), breaking the better-sqlite3 source build.
+        os: [ubuntu-latest, macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     name: test (${{ matrix.os }})
 
@@ -45,6 +48,27 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build better-sqlite3 native addon (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          GYP_MSVS_VERSION: '2022'
+        run: |
+          # better-sqlite3 is an optionalDependency: when its install fails,
+          # npm silently drops the package (no node_modules/better-sqlite3 at
+          # all). v12.11.1 ships no node-v115 (node 20) prebuilds, so install
+          # it directly -- never optional -- and build from source if needed.
+          if [ ! -d node_modules/better-sqlite3 ]; then
+            npm install better-sqlite3 --no-save --foreground-scripts
+          fi
+          cd node_modules/better-sqlite3
+          npx --yes prebuild-install || npx --yes node-gyp rebuild --release
+          ls -l build/Release/better_sqlite3.node
 
       - name: Typecheck
         run: npx tsc -b --noEmit
