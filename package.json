@@ -84,7 +84,7 @@
     "picocolors": "^1.1.1",
     "turndown": "^7.2.0",
     "turndown-plugin-gfm": "^1.0.2",
-    "zod": "^3.25.0"
+    "zod": "^4.6.7"
   },
   "optionalDependencies": {
     "better-sqlite3": "^12.6.2"
