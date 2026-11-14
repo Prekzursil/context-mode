@@ -188,9 +188,9 @@ describe("WebFetch", () => {
     assertDeny(result, "fetch_and_index");
     const parsed = JSON.parse(result.stdout);
     const reason: string = parsed.hookSpecificOutput.permissionDecisionReason;
-    const urlRe = new RegExp("(^|[^\w.-])https://docs\.example\.com/api(?=$|[^\w.-])");
+    const urlRe = new RegExp(String.raw`(^|[^\w.-])https://docs\.example\.com/api(?=$|[^\w.-])`);
     assert.ok(urlRe.test(reason), "Expected original URL in reason");
-    assert.ok(!reason.includes("docs.example.com.evil.com"), "Reason must not contain lookalike hosts");
+    assert.ok(!new RegExp(String.raw`docs\.example\.com\.evil\.com`).test(reason), "Reason must not contain lookalike hosts");
     assert.ok(
       parsed.hookSpecificOutput.permissionDecisionReason.includes("Do NOT use curl"),
       "Expected curl warning in reason",

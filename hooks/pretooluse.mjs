@@ -11,7 +11,7 @@ import "./suppress-stderr.mjs";
  * uses core/formatters.mjs for Claude Code output format.
  */
 
-import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync, copyFileSync, readdirSync, renameSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, renameSync } from "node:fs";
 import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir, tmpdir } from "node:os";
