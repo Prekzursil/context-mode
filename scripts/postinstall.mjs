@@ -8,7 +8,7 @@
  *    Creates a directory junction so npm's %~dp0\node_modules\... resolves.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, symlinkSync } from "node:fs";
 import { execSync, execFileSync } from "node:child_process";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -85,10 +85,9 @@ if (process.platform === "win32" && process.env.npm_config_global === "true") {
         if (!isSafeWindowsPath(expectedPkgDir) || !isSafeWindowsPath(actualPkgDir)) {
           console.warn(`  context-mode: skipping junction — path contains unsafe characters`);
         } else {
-          execSync(`mklink /J "${expectedPkgDir}" "${actualPkgDir}"`, {
-            shell: "cmd.exe",
-            stdio: "pipe",
-          });
+          // Junctions need no admin rights on Windows and avoid a cmd.exe
+          // shell entirely (CodeQL js/indirect-command-line-injection).
+          symlinkSync(actualPkgDir, expectedPkgDir, "junction");
           console.log(`\n  context-mode: created junction for nvm4w compatibility`);
           console.log(`    ${expectedPkgDir} → ${actualPkgDir}\n`);
         }

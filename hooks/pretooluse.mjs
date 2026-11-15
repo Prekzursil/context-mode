@@ -14,7 +14,7 @@ import "./suppress-stderr.mjs";
 import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, renameSync } from "node:fs";
 import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { homedir, tmpdir } from "node:os";
+import { homedir } from "node:os";
 import { readStdin } from "./core/stdin.mjs";
 import { routePreToolUse, initSecurity } from "./core/routing.mjs";
 import { formatDecision } from "./core/formatters.mjs";
@@ -55,7 +55,8 @@ try {
 
       // Create start.mjs in new dir if missing
       const startMjs = resolve(correctDir, "start.mjs");
-      if (!existsSync(startMjs)) {
+      try {
+        // 'wx' fails atomically if another process created it first
         writeFileSync(startMjs, [
           '#!/usr/bin/env node',
           'import { existsSync } from "node:fs";',
@@ -70,7 +71,7 @@ try {
           '  await import("./build/server.js");',
           '}',
         ].join("\n"), "utf-8");
-      }
+      } catch { /* already created by another process */ }
     }
 
     const targetDir = existsSync(correctDir) ? correctDir : myRoot;
