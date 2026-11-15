@@ -459,7 +459,7 @@ server.registerTool(
           "Use search(queries: [...]) to retrieve specific sections. Example: 'failing tests', 'HTTP 500 errors'." +
           "\n\nTIP: Use specific technical terms, not just concepts. Check 'Searchable terms' in the response for available vocabulary.",
         ),
-    }),
+    }).shape,
   },
   async ({ language, code, timeout, background, intent }) => {
     // Security: deny-only firewall
@@ -733,7 +733,7 @@ server.registerTool(
           "What you're looking for in the output. When provided and output is large (>5KB), " +
           "returns only matching sections via BM25 search instead of truncated output.",
         ),
-    }),
+    }).shape,
   },
   async ({ path, language, code, timeout, intent }) => {
     // Security: check file path against Read deny patterns
@@ -858,7 +858,7 @@ server.registerTool(
         .describe(
           "Label for the indexed content (e.g., 'Context7: React useEffect', 'Skill: frontend-design')",
         ),
-    }),
+    }).shape,
   },
   async ({ content, path, source }) => {
     if (!content && !path) {
@@ -972,7 +972,7 @@ server.registerTool(
         .enum(["code", "prose"])
         .optional()
         .describe("Filter results by content type: 'code' or 'prose'."),
-    }),
+    }).shape,
   },
   async (params) => {
     try {
@@ -1207,7 +1207,7 @@ server.registerTool(
         .boolean()
         .optional()
         .describe("Skip cache and re-fetch even if content was recently indexed"),
-    }),
+    }).shape,
   },
   async ({ url, source, force }) => {
     // TTL cache: if source was indexed within 24h, return cached hint
@@ -1386,7 +1386,7 @@ server.registerTool(
         .optional()
         .default(60000)
         .describe("Max execution time in ms (default: 60s)"),
-    }),
+    }).shape,
   },
   async ({ commands, queries, timeout }) => {
     // Security: check each command against deny patterns
@@ -1525,7 +1525,7 @@ server.registerTool(
       "Returns context consumption statistics for the current session. " +
       "Shows total bytes returned to context, breakdown by tool, call counts, " +
       "estimated token usage, and context savings ratio.",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).shape,
   },
   async () => {
     const totalBytesReturned = Object.values(sessionStats.bytesReturned).reduce(
@@ -1770,7 +1770,7 @@ server.registerTool(
     description:
       "Diagnose context-mode installation. Runs all checks server-side and " +
       "returns results as a markdown checklist. No CLI execution needed.",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).shape,
   },
   async () => {
     const lines: string[] = ["## context-mode doctor", ""];
@@ -1846,7 +1846,7 @@ server.registerTool(
       "You MUST run the returned command using your shell tool (Bash, shell_execute, " +
       "run_in_terminal, etc.) and display the output as a checklist. " +
       "Tell the user to restart their session after upgrade.",
-    inputSchema: z.object({}),
+    inputSchema: z.object({}).shape,
   },
   async () => {
     // __pkg_dir is build/ for tsc, plugin root for bundle — resolve to plugin root
